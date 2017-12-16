@@ -21,7 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let statusItem: NSStatusItem
     
     override init() {
-        statusItem = NSStatusBar.system().statusItem(withLength: NSSquareStatusItemLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         
         super.init()
         setupStatusButton()
@@ -41,12 +41,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func setupStatusButton() {
         if let button = statusItem.button {
-            button.image = NSImage(named: "statusBarButtonImage")
+            button.image = NSImage(named: NSImage.Name(rawValue: "statusBarButtonImage"))
         }
     }
     
     func getRunningApplication() -> NSRunningApplication? {
-        return NSWorkspace.shared().runningApplications.filter({ $0.localizedName == applicationName }).first
+        return NSWorkspace.shared.runningApplications.filter({ $0.localizedName == applicationName }).first
     }
     
     func showModalAlert(_ message: String) {
@@ -57,14 +57,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func openApplication() {
-        guard NSWorkspace.shared().launchApplication(applicationName) else {
+        guard NSWorkspace.shared.launchApplication(applicationName) else {
             showModalAlert("Could not open application")
             return
         }
     }
     
     @objc func appTerminated(notification: Notification) {
-        guard notification.name == Notification.Name.NSWorkspaceDidTerminateApplication,
+        guard notification.name == NSWorkspace.didTerminateApplicationNotification,
             let terminatedAppName = notification.userInfo?["NSApplicationName"] as? String,
             terminatedAppName == applicationName else {
                 return
@@ -72,7 +72,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         self.openApplication()
 
-        NSWorkspace.shared().notificationCenter.removeObserver(self)
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
     @objc func start() {
@@ -85,16 +85,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         
-        NSWorkspace.shared().notificationCenter.addObserver(
+        NSWorkspace.shared.notificationCenter.addObserver(
             self,
             selector: appTerminatedSelector,
-            name: Notification.Name.NSWorkspaceDidTerminateApplication,
+            name: NSWorkspace.didTerminateApplicationNotification,
             object: nil
         )
 
         guard runningApplication.forceTerminate() else {
             showModalAlert("Could not force terminate application")
-            NSWorkspace.shared().notificationCenter.removeObserver(self)
+            NSWorkspace.shared.notificationCenter.removeObserver(self)
             return
         }
     }
