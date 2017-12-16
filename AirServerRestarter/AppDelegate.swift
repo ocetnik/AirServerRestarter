@@ -13,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     let applicationName: String = "AirServer"
     
+    let appTerminatedSelector = #selector(AppDelegate.appTerminated(notification:))
     let startSelector = #selector(AppDelegate.start)
     let restartSelector = #selector(AppDelegate.restart)
     let quitSelector = #selector(NSApplication.terminate(_:))
@@ -62,6 +63,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    @objc func appTerminated(notification: Notification) {
+        guard notification.name == Notification.Name.NSWorkspaceDidTerminateApplication,
+            let terminatedAppName = notification.userInfo?["NSApplicationName"] as? String,
+            terminatedAppName == applicationName else {
+                return
+        }
+
+        self.openApplication()
+
+        NSWorkspace.shared().notificationCenter.removeObserver(self)
+    }
+
     @objc func start() {
         self.openApplication()
     }
@@ -72,14 +85,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         
+        NSWorkspace.shared().notificationCenter.addObserver(
+            self,
+            selector: appTerminatedSelector,
+            name: Notification.Name.NSWorkspaceDidTerminateApplication,
+            object: nil
+        )
+
         guard runningApplication.forceTerminate() else {
             showModalAlert("Could not force terminate application")
+            NSWorkspace.shared().notificationCenter.removeObserver(self)
             return
-        }
-        
-        // TODO refactor without delay (with KVO)
-        delay(2) {
-            self.openApplication()
         }
     }
     
